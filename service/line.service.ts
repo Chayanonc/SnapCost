@@ -83,21 +83,66 @@ async function replyToLine(replyToken: string, text: string) {
  * Send a proactive (push) message to a LINE user.
  * Use this when replyToken is already consumed or not available.
  */
-async function pushToLine(userId: string, text: string) {
-  const res = await fetch(LINE_PUSH_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-    },
-    body: JSON.stringify({
-      to: userId,
-      messages: [{ type: "text", text }],
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    console.error(`[LINE] pushToLine failed: ${res.status} ${err}`);
+async function pushToLine(
+  userId: string,
+  text: string,
+  retryKey?: string,
+  retryCount = 0,
+) {
+  const currentRetryKey = retryKey || crypto.randomUUID();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+  };
+
+  if (retryCount > 0) {
+    headers["X-Line-Retry-Key"] = currentRetryKey;
+  }
+
+  try {
+    const res = await fetch(LINE_PUSH_API, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        to: userId,
+        messages: [{ type: "text", text }],
+      }),
+    });
+
+    if (res.status === 409) {
+      console.log(
+        `[LINE] pushToLine previously succeeded for user ${userId} (409 Conflict)`,
+      );
+      return;
+    }
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`[LINE] pushToLine failed: ${res.status} ${err}`);
+
+      // Retry on 5xx server errors or 429 rate limit, up to a maximum number of retries
+      if ((res.status >= 500 || res.status === 429) && retryCount < 3) {
+        console.log(
+          `[LINE] Retrying push message for user ${userId} (Attempt ${retryCount + 1})`,
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * (retryCount + 1)),
+        );
+        return pushToLine(userId, text, currentRetryKey, retryCount + 1);
+      }
+    }
+  } catch (error) {
+    console.error(`[LINE] pushToLine fetch error:`, error);
+    // Retry on network errors
+    if (retryCount < 3) {
+      console.log(
+        `[LINE] Retrying push message for user ${userId} due to fetch error (Attempt ${retryCount + 1})`,
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000 * (retryCount + 1)),
+      );
+      return pushToLine(userId, text, currentRetryKey, retryCount + 1);
+    }
   }
 }
 
