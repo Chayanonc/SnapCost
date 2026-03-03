@@ -56,13 +56,6 @@ export async function POST(req: NextRequest) {
             baseUrl,
             lineUserId,
           );
-        } else if (message.type === "text") {
-          // Generic text fallback
-          const { GoogleGenerativeAI } = await import("@google/generative-ai");
-          const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-          const result = await model.generateContent(message.text!);
-          await lineService.replyToLine(replyToken, result.response.text());
         } else {
           await lineService.replyToLine(
             replyToken,

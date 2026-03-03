@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import stringSimilarity from "string-similarity";
 import {
   LINE_CHANNEL_ACCESS_TOKEN,
   LINE_CHANNEL_SECRET,
@@ -180,6 +181,9 @@ async function handleImageMessage(
   const ocrResult = await extractTextFromImage(base64, contentType);
 
   try {
+    const existingItems = await prisma.item.findMany();
+    const existingNames = existingItems.map((i) => i.name);
+
     for (const item of ocrResult.items) {
       const price =
         item.price.toString().split("/").length > 1
@@ -190,8 +194,20 @@ async function handleImageMessage(
           : [Number(item.price)];
       const priceVatVal = 0;
 
+      let targetItemName = item.item;
+
+      if (existingNames.length > 0) {
+        const match = stringSimilarity.findBestMatch(item.item, existingNames);
+        if (match.bestMatch.rating > 0.8) {
+          targetItemName = match.bestMatch.target;
+          console.log(
+            `[OCR] Fuzzy match: "${item.item}" -> "${targetItemName}" (rating: ${match.bestMatch.rating.toFixed(2)})`,
+          );
+        }
+      }
+
       await prisma.item.upsert({
-        where: { name: item.item },
+        where: { name: targetItemName },
         update: {
           prices: {
             create: price.map((price) => ({
@@ -201,7 +217,7 @@ async function handleImageMessage(
           },
         },
         create: {
-          name: item.item,
+          name: targetItemName,
           prices: {
             create: price.map((price) => ({
               price,

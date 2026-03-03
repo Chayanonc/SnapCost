@@ -10,13 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceHistoryButton } from "@/components/price-history-button";
-
-function formatPrice(price: number) {
-  return price.toLocaleString("th-TH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
+import { formatPrice } from "@/lib/format-price";
 
 function getLatestPrice(
   prices: { price: number; priceVat: number | null; createdAt: Date }[],
@@ -32,12 +26,14 @@ function getPriceChange(prices: { price: number; createdAt: Date }[]) {
   return { diff, pct };
 }
 
+export const revalidate = 0;
+
 export default async function Home() {
   const items = await prisma.item.findMany({
     include: {
       prices: { orderBy: { createdAt: "desc" } },
     },
-    orderBy: { name: "asc" },
+    orderBy: { updatedAt: "desc" },
   });
 
   const totalItems = items.length;

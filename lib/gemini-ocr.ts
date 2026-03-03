@@ -18,7 +18,7 @@ export async function extractTextFromImage(
 ): Promise<OcrResult> {
   const prompt = `Role: คุณคือผู้เชี่ยวชาญด้านการสกัดข้อมูล (Data Extraction) จากเอกสารตารางราคาสินค้า
 
-Task: ช่วย ocr ข้อมูลแบบละเอียด ให้เอาตามข้อมูลที่อ่านได้ ออกมาให้ครบทุก row แสดงเป็น json 
+Task: ช่วย ocr ข้อมูลแบบละเอียด ให้เอาตามข้อมูลที่อ่านได้ ออกมาให้ครบทุก row แสดงเป็น json โดยเอาข้อมูลสินค้าจริงๆ ไม่ต้องใส่ จังหวัด อำเภอ ถ้ามีข้อมูลที่ซ้ำกันให้แยกตามบริษัทได้ 
 
 Rules:
 
@@ -63,6 +63,7 @@ export const ocrFormat = (content: string): OcrFormat => {
     const result = cleanedJson.map((item: any) => {
       return {
         ...item,
+        item: item.item.toString().replace(/\s/g, ""),
         price: item.price,
         priceVat: item.priceVat,
       };
