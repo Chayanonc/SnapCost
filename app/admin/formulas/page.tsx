@@ -34,24 +34,33 @@ export default async function AdminFormulasPage() {
 
       <main className="mx-auto max-w-4xl px-4 py-14 sm:px-8 space-y-8">
         {/* Header */}
-        <div className="flex flex-col gap-4">
-          <Link
-            href="/"
-            className="inline-flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            กลับหน้าหลัก
-          </Link>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="flex flex-col gap-4">
+            <Link
+              href="/"
+              className="inline-flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              กลับหน้าหลัก
+            </Link>
 
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-              จัดการตัวแปรสูตรคำนวณ
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              ปรับแต่งค่าตัวแปร เช่น ค่าไฟ ค่าแรง ของแต่ละสูตร
-              การเปลี่ยนแปลงนี้จะมีผลกับการคำนวณกำไรทันที
-            </p>
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+                จัดการตัวแปรสูตรคำนวณ
+              </h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                ปรับแต่งค่าตัวแปร เช่น ค่าไฟ ค่าแรง ของแต่ละสูตร
+                การเปลี่ยนแปลงนี้จะมีผลกับการคำนวณกำไรทันที
+              </p>
+            </div>
           </div>
+
+          <Link
+            href="/admin/formulas/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 whitespace-nowrap"
+          >
+            <span className="text-lg">➕</span> สร้างสูตรใหม่
+          </Link>
         </div>
 
         {/* Formulas List */}

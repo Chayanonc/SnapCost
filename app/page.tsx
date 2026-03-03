@@ -99,16 +99,22 @@ export default async function Home() {
               ข้อมูลราคาที่อ่านจากรูปภาพด้วย Gemini OCR ผ่าน LINE Bot
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <a
-              href="/categories"
-              className="inline-flex items-center gap-2 rounded-lg border border-violet-400/20 bg-violet-400/10 px-4 py-2 text-sm font-medium text-violet-400 transition hover:bg-violet-400/20"
+              href="/upload"
+              className="inline-flex items-center gap-2 rounded-lg border border-blue-400/20 bg-blue-400/10 px-4 py-2 text-sm font-medium text-blue-400 transition hover:bg-blue-400/20"
             >
-              🗂️ จัดการหมวดหมู่
+              📤 อัปโหลดรูประบบ (OCR)
+            </a>
+            <a
+              href="/admin/formulas"
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-400/20 whitespace-nowrap"
+            >
+              🧮 จัดการสูตรล่วงหน้า
             </a>
             <a
               href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition hover:bg-secondary/80"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition hover:bg-secondary/80 whitespace-nowrap"
             >
               🔄 รีเฟรช
             </a>

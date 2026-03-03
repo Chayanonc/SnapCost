@@ -38,3 +38,38 @@ export async function updateFormulaVariable(
     return { success: false, error: "Unable to update variable" };
   }
 }
+
+interface CreateFormulaData {
+  name: string;
+  expression: string;
+  keywords: string[];
+  variables: {
+    name: string;
+    label: string;
+    value: number;
+  }[];
+}
+
+export async function createFormula(data: CreateFormulaData) {
+  try {
+    const formula = await prisma.formula.create({
+      data: {
+        name: data.name,
+        expression: data.expression,
+        keywords: {
+          create: data.keywords.map((kw) => ({ keyword: kw })),
+        },
+        variables: {
+          create: data.variables,
+        },
+      },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/admin/formulas");
+    return { success: true, formulaId: formula.id };
+  } catch (error) {
+    console.error("Failed to create formula:", error);
+    return { success: false, error: "Unable to create formula" };
+  }
+}
