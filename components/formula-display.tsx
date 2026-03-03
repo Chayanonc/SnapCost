@@ -1,69 +1,136 @@
 "use client";
 
-export function FormulaDisplay({ value }: { value: number }) {
-  //   ปริมาณ;
-  const B1 = 30000;
-  //   ระยะเวลาต่อก้อน;
-  const B2 = 20;
-  //   น้ำหนักก้อน;
-  const B3 = 1300;
+import { useState, useTransition } from "react";
+import { setItemFormula } from "@/app/actions/formula.actions";
+import { evaluate } from "mathjs";
+import type {
+  Formula,
+  FormulaVariable,
+  FormulaKeyword,
+} from "@/app/generated/prisma/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
-  //   ขนาดลวด;
-  const B5 = 3.2;
+type FullFormula = Formula & {
+  variables: FormulaVariable[];
+  keywords: FormulaKeyword[];
+};
 
-  //   จำนวน;
-  const B7 = 6;
-  //   ขนาดมอเตอร์;
-  const B9 = 37;
-  //   ค่าไฟ;
-  const B10 = 7;
-  //   ค่าน้ำมัน;
-  const B11 = 1;
-  //   อัตราการสิ้นเปลือง;
-  const B13 = 5;
-  //   ค่าเชื้อเพลง;
-  const B14 = 33;
+interface FormulaDisplayProps {
+  itemId: string;
+  itemName: string;
+  value: number;
+  formulaId: string | null;
+  formulas: FullFormula[];
+}
 
-  //   ทุนซื้อ;
-  const B16 = 6.2;
-  //   ขนส่ง;
-  const B18 = 0.6;
-  //   ขาย;
-  const B20 = value;
+export function FormulaDisplay({
+  itemId,
+  itemName,
+  value,
+  formulaId,
+  formulas,
+}: FormulaDisplayProps) {
+  const [isPending, startTransition] = useTransition();
 
-  const D5 = 6;
-  const G5 = 25;
-  //   ค่าแรงต่อคน
-  const D7 = 500;
+  // 1. Determine which formula to use
+  // First, check if the user manually selected one. If not, auto-detect from keywords.
+  const activeFormulaConfig = formulaId
+    ? formulas.find((f) => f.id === formulaId)
+    : formulas.find((f) =>
+        f.keywords.some((k) => itemName.includes(k.keyword)),
+      );
 
-  //   ค่าแรง;
-  const B6 = (B7 * D7) / B1;
+  const calculateAndRenderProfit = () => {
+    if (!activeFormulaConfig) {
+      return <div className="text-muted-foreground text-xs">— (ไม่มีสูตร)</div>;
+    }
 
-  //   BACKHOLE;
-  //   B2÷60×B13×B14÷B3
-  const B12 = ((B2 / 60) * B13 * B14) / B3;
-  //   ค่าไฟฟ้า;
-  //   B2÷60×B9×B10÷B3
-  const B8 = ((B2 / 60) * B9 * B10) / B3;
-  //   ค่าลวดมัดก้อน;
-  //   22÷7×B5×B5÷4×7850÷1000000×(1.1+1.1+1.8+1.8+0.9)×D5×G5÷B3
-  const B4 =
-    ((((((22 / 7) * B5 * B5) / 4) * 7850) / 1000000) *
-      (1.1 + 1.1 + 1.8 + 1.8 + 0.9) *
-      D5 *
-      G5) /
-    B3;
-  //   ผลิต;
-  //   B4+B6+B8+B12
-  const B17 = B4 + B6 + B8 + B12;
+    let profit = 0;
+    try {
+      const scope: Record<string, number> = { sellPrice: value };
+      activeFormulaConfig.variables.forEach((v) => {
+        scope[v.name] = v.value;
+      });
+      profit = evaluate(activeFormulaConfig.expression, scope);
+    } catch (e) {
+      console.error("Formula evaluation error:", e);
+      return <div className="text-xs text-rose-500">Error in Formula</div>;
+    }
 
-  //   ต้นทุน;
-  //   B16+B17+B18
-  const B19 = B16 + B17 + B18;
+    const isPositive = profit >= 0;
 
-  //   กำไร;
-  //   B20−B19
-  const B21 = B20 - B19;
+    return (
+      <div className="flex flex-col items-end">
+        <div
+          className={`text-sm font-semibold ${isPositive ? "text-emerald-500" : "text-rose-500"}`}
+        >
+          {isPositive ? "+" : ""}
+          {profit.toFixed(2)}
+        </div>
+        <div className="text-[10px] text-muted-foreground mt-0.5">
+          กำไร ({activeFormulaConfig.name})
+        </div>
+      </div>
+    );
+  };
 
-  return <div>กำไร {B21}</div>;
+  const handleFormulaChange = (newFormulaId: string) => {
+    startTransition(async () => {
+      const selectedId = newFormulaId === "none" ? null : newFormulaId;
+      await setItemFormula(itemId, selectedId);
+    });
+  };
+
+  // Find auto formula for display purposes when none is explicitly selected
+  const autoFormula = formulas.find((f) =>
+    f.keywords.some((k) => itemName.includes(k.keyword)),
+  );
+
+  return (
+    <div className="flex flex-col items-end gap-1.5">
+      {calculateAndRenderProfit()}
+
+      <div className="flex items-center gap-2">
+        {isPending && (
+          <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+        )}
+        <Select
+          value={formulaId || "auto"}
+          onValueChange={handleFormulaChange}
+          disabled={isPending}
+        >
+          <SelectTrigger className="h-6 w-38 px-2 text-[10px] bg-secondary/30">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto" className="text-[10px]">
+              อัตโนมัติ ({autoFormula?.name || "ไม่มี"})
+            </SelectItem>
+            <SelectItem
+              value="none"
+              className="text-[10px] text-muted-foreground"
+            >
+              ❌ ไม่ใช้สูตร
+            </SelectItem>
+            {formulas.map((config) => (
+              <SelectItem
+                key={config.id}
+                value={config.id}
+                className="text-[10px]"
+              >
+                {config.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 }

@@ -37,6 +37,13 @@ export default async function Home() {
     orderBy: { updatedAt: "desc" },
   });
 
+  const formulas = await prisma.formula.findMany({
+    include: {
+      variables: true,
+      keywords: true,
+    },
+  });
+
   const totalItems = items.length;
   const totalPriceRecords = items.reduce(
     (sum, item) => sum + item.prices.length,
@@ -202,7 +209,13 @@ export default async function Home() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <FormulaDisplay value={item.prices[0].price} />
+                            <FormulaDisplay
+                              itemId={item.id}
+                              itemName={item.name}
+                              value={item.prices[0].price}
+                              formulaId={item.formulaId}
+                              formulas={formulas}
+                            />
                           </TableCell>
 
                           <TableCell className="text-right">

@@ -13,6 +13,8 @@ datasource db {
 model Item {
   id        String   @id @default(cuid())
   name      String   @unique
+  formulaId String? // ID ของสูตรที่ผู้ใช้เลือกเอง ถ้าว่างจะใช้สูตรจากการทาย (matchKeywords)
+  formula   Formula? @relation(fields: [formulaId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -30,4 +32,54 @@ model Price {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// Schema ใหม่สำหรับการจัดการสูตรคำนวณแบบ Dynamic
+// ============================================
+
+model Formula {
+  id   String @id @default(cuid())
+  name String // ชื่อสูตร เช่น "สูตรกระดาษขาว-ดำ"
+
+  // เก็บสูตรที่เป็นสมการสำหรับ MathJS เช่น "sellPrice - (B16 + B17 + B18)"
+  expression String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 1 สูตรมีหลายตัวแปร
+  variables FormulaVariable[]
+  keywords  FormulaKeyword[]
+
+  // ความสัมพันธ์กลับไปหา Item
+  items Item[]
+}
+
+model FormulaVariable {
+  id    String  @id @default(cuid())
+  name  String // ชื่อตัวแปรที่จะเอาไปใช้ใน expression เช่น "B1", "B2"
+  label String? // ชื่อภาษาไทยให้ผู้ใช้อ่านรู้เรื่อง เช่น "ปริมาณ"
+  value Float // ค่าตัวเลขเริ่มต้น
+
+  formula   Formula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+  formulaId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, formulaId]) // ห้ามชื่อตัวแปรซ้ำกันในสูตรเดียวกัน
+}
+
+model FormulaKeyword {
+  id      String @id @default(cuid())
+  keyword String // คำค้นหา เช่น "ขาวดำ", "ขาว-ดำ"
+
+  formula   Formula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+  formulaId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([keyword, formulaId])
 }
