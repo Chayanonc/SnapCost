@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceHistoryButton } from "@/components/price-history-button";
 import { formatPrice } from "@/lib/format-price";
+import { FormulaDisplay } from "@/components/formula-display";
 
 function getLatestPrice(
   prices: { price: number; priceVat: number | null; createdAt: Date }[],
@@ -152,12 +153,9 @@ export default async function Home() {
                     <TableRow className="border-border hover:bg-transparent">
                       <TableHead className="w-10">#</TableHead>
                       <TableHead>ชื่อสินค้า</TableHead>
-                      <TableHead className="text-right">
-                        ราคาล่าสุด (บาท/กก.)
-                      </TableHead>
-                      <TableHead className="text-right">
-                        การเปลี่ยนแปลง
-                      </TableHead>
+                      <TableHead className="text-right">ราคาล่าสุด</TableHead>
+                      <TableHead className="text-right">การคำนวณ</TableHead>
+                      <TableHead className="text-right">ราคาสูงสุด</TableHead>
                       <TableHead className="text-center">ประวัติ</TableHead>
                       <TableHead className="text-right">อัปเดตล่าสุด</TableHead>
                     </TableRow>
@@ -179,9 +177,9 @@ export default async function Home() {
                             <p className="font-semibold text-foreground">
                               {item.name}
                             </p>
-                            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                            {/* <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                               {item.id.slice(0, 8)}…
-                            </p>
+                            </p> */}
                           </TableCell>
 
                           <TableCell className="text-right">
@@ -202,6 +200,9 @@ export default async function Home() {
                                 ไม่มีข้อมูล
                               </span>
                             )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <FormulaDisplay value={item.prices[0].price} />
                           </TableCell>
 
                           <TableCell className="text-right">

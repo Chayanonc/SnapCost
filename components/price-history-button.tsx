@@ -122,6 +122,8 @@ export function PriceHistoryButton({ item }: { item: Item }) {
                               day: "2-digit",
                               month: "short",
                               year: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
                             },
                           )}
                         </span>
